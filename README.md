@@ -1,1 +1,1 @@
-# Satellite-Image-Labeling-System-
+# Satellite-Image-Labeling-System
