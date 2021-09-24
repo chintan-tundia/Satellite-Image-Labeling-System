@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}
+    <head>
+        <script type="text/javascript" >
+            var received_data = "{{ annotJSON }}"
+        </script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <style type="text/css">
+            #map {
+              height: 640px;             
+              width: 640px;              
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map" height="640" width="640"></div>
+        <br>
+        <b>CurrImgIdx:</b> <span id="currImg"></span>
+        <br>
+        <b>ImgName:</b> <span id="imgName"></span>
+        <br>
+        <b>Saved:</b> <span style="color:green" id="status"></span>
+        <br>
+        <button onclick="previous()">Previous</button> 
+        <button onclick="saveToDB()">SaveToDB</button>        
+        <button onclick="next()">Next</button>        
+    </body>        
+      <script type="text/javascript" src="{% static 'Gmapv2/js/saveCDfromDStoDB.js' %}"></script>   
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC61MLyQ00dcfVHEG60iOlELqooDPUrRow&callback=initialize&libraries=&v=weekly"
+      async></script>
+      
+           
+</html>    
