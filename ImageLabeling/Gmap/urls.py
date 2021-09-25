@@ -3,7 +3,7 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.index, name='index'),    
     url(r'^ajax/save_image$', views.save_image, name='save_image'),
     url(r'^ajax/save_markers$', views.save_markers, name='save_markers'),
     url(r'^ajax/save_annotations$', views.save_annotations, name='save_annotations'),

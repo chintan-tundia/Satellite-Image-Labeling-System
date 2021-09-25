@@ -24,13 +24,22 @@ import math
 import imutils
 import numpy as np
 
+
 def index(request):    
-    template = loader.get_template('Gmap/index.html')    
+    template = loader.get_template('Gmapv2/index.html')    
     allMarkers = GMapMarker.objects.all()
     context = {  
         'allMarkers':allMarkers,        
     }    
     return HttpResponse(template.render(context, request))
+
+# def index(request):    
+#     template = loader.get_template('Gmap/index.html')    
+#     allMarkers = GMapMarker.objects.all()
+#     context = {  
+#         'allMarkers':allMarkers,        
+#     }    
+#     return HttpResponse(template.render(context, request))
 
 def displayImages(request):
     template = loader.get_template('Gmap/displayImages.html')    

@@ -15,9 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include,path
-
+from . import views
 urlpatterns = [
+
     path('Gmap/', include('Gmap.urls')),
     path('Gmapv2/', include('Gmapv2.urls')),
+    path('Gmapv3/', include('Gmapv3.urls')),
+    path('', views.index, name='index'),    
     path('admin/', admin.site.urls),
 ]
