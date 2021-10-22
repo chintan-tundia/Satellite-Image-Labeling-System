@@ -733,3 +733,22 @@ def downloadDataset(request):
     response['Content-Disposition'] = 'attachment; filename=%s' % ("MISDataset_"+dttm.today().strftime('%Y_%m_%d')+".zip")    
     return response;
 
+def approveImage(request):
+    data = {
+                'status': -1
+    }
+    if request.method == 'POST':
+        image_name = request.POST.get('image_name')
+        approveFlag = request.POST.get('approve_flag')
+        approveImg=Image.objects.get(image_name=image_name)
+        if(approveFlag=='true'):
+            approveImg.is_approved=True
+        if(approveFlag=='false'):
+            approveImg.is_approved=False
+        approveImg.save()
+        data = {
+                'status': 1
+        }
+        return JsonResponse(data)
+
+    return JsonResponse(data) 

@@ -11,7 +11,8 @@ urlpatterns = [
     url(r'^ajax/get_image_list_dataset$', views.getImageListDataset, name='getImageListDataset'),
     url(r'^editannotsdataset$', views.editAnnotsDataset, name='editAnnotsDataset'),
     url(r'^ajax/save_edited_image_dataset$', views.save_edited_image_dataset, name='save_edited_image_dataset'),
-    url(r'^downloaddataset$', views.downloadDataset, name='downloadDataset')    
+    url(r'^downloaddataset$', views.downloadDataset, name='downloadDataset'),
+    url(r'^ajax/approve_image$', views.approveImage, name='approveImage'),    
    
 ]
 
