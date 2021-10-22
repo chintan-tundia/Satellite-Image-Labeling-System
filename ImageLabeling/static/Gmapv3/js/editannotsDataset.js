@@ -1,4 +1,3 @@
-
 //Global variable Initializations
 	var markers = [];
   var allOldMarkers = [];
@@ -14,13 +13,14 @@
   var vlat = 19.859317;
   var vlong = 75.516106;//Somewhere in Kubephal,Aurangabad
   var selIdx=0
+  var boundaryLoaded = 0
   //initialize(vlat,vlong); 
 
 
 /*-------Functions--------*/  
-	function initialize(vlat,vlong){  
+	function initialize(vlat,vlong){        
        var vlat = cLat;
-		   var vlong = cLng;        z
+		   var vlong = cLng;        
        labelledMarkers = JSON.parse(gmms)
        totalObjects=0 
         //$('#inform').hide()     
@@ -28,7 +28,7 @@
         //var latlng = new google.maps.LatLng(19.910915, 73.876757);
         latlng = new google.maps.LatLng(vlat,vlong);		
         var myOptions = {
-            zoom: 19,
+            zoom: zoomLvlofImg,
             center: latlng,
             disableDefaultUI: true,
             mapTypeId: google.maps.MapTypeId.SATELLITE,
@@ -112,8 +112,42 @@
           $('#btnPolygon').addClass("disabled");
         })
         
+        //Calculate bounds and draw rectangle around boundary
+        google.maps.event.addListener(map, 'bounds_changed', function() {
+          if(boundaryLoaded == 0){
+            bounds=map.getBounds()            
+            ne=bounds.getNorthEast()
+            sw=bounds.getSouthWest()
+            var north= ne.lat();
+            var east=ne.lng();
+            var south=sw.lat();
+            var west=sw.lng();
+            pths = []        
+            pths.push({lat:north, lng:west})
+            pths.push({lat:north, lng:east})
+            pths.push({lat:south, lng:east})
+            pths.push({lat:south, lng:west})
+            pths.push({lat:north, lng:west})
+                        
+            var pgn = new google.maps.Polygon({
+                    paths: pths,              
+                    fillOpacity:0,
+                    strokeColor:'white',
+                    //fillColor: '#e6dc03',
+                    fillColor: 'transparent',
+                    strokeWeight: 2,
+                    clickable: true,                    
+                    editable: false,
+                    zIndex: 1,                
+                  });
+            pgn.setMap(map);
+            boundaryLoaded = 1
+          }          
+        });
+         
+
         
-        google.maps.event.addListener(drawingManager, 'overlaycomplete', function(e) {
+        google.maps.event.addListener(drawingManager, 'overlaycomplete', function(e) {          
             if (e.type != google.maps.drawing.OverlayType.MARKER) {
                 // Switch back to non-drawing mode after drawing a shape.
                 drawingManager.setDrawingMode(null);
@@ -124,89 +158,146 @@
 
                 // Add an event listener that selects the newly-drawn shape when the user
                 // mouses down on it.          
-                var newShape = e.overlay;                
-                var paths=newShape.getPath()
+                var newShape = e.overlay;   
+                newShape.type = e.type; 
                 //var totalObjects=Object.keys(allObjects).length
                 var objNo = totalObjects++;                
                 var idName = "obj"+objNo;
-                var idSelect = "sel"+objNo;                
-                google.maps.event.addListener(newShape, 'click', function() {                                    
-                    for (var key in allObjects){                
-                      var obj = allObjects[key] 
-                      if(this.getPath()==obj.getPath()){
-                        console.log("Found At",key)
-                        setSelection(this,key);
-                      }                      
-                    }
+                var idSelect = "sel"+objNo;
+
+                if(newShape.type=="circle"){
+                  google.maps.event.addListener(newShape, 'click', function() {                  
+                    setSelection(newShape,idName);
+                  });
                   setSelection(newShape,idName);
-                });
-                setSelection(newShape,idName);
-                
-                allObjects[idName] = newShape;
-                //allObjects.push(newShape)
-                allIds.push(idName)
-                
-                //Adding label
-                var ptsStr = getPoints(newShape)
-                var dropdownStr = "<form><div class='form-group'>"+ 
-                                  //"<p>"+ptsStr+"</p><br>"+                 
-                                  "<select id='"+idSelect+"' class='form-control'>"+
-                                    "<option>Select Class</option>"+
-                                    "<option>Wall Based Checkdam</option>"+
-                                    "<option>Gate Based Checkdam</option>"+                    
-                                  "</select>"+         
-                                "</div></form>";
-                var htmlCont = "<div id='"+idName+"' class='panel panel-info'>"+
-                                "<div class='panel-heading'>"+
-                                   "<b> Annotation "+(objNo+1)+"</b>"+
-                                 "</div>"+
-                                 "<div class='panel-body'>"+dropdownStr+                                    
-                                    "<a id='btnDelete' type='button' class='btn btn-danger'>"+
-                                    "<span class='glyphicon glyphicon-minus-sign'></span>"+
-                                    " Remove Annotation"+
-                                    "</a>"+
-                                 "</div>"+
-                              "</div>";
-                $("#annotations").append(htmlCont);
-                $('#btnPolygon').removeClass("disabled");
+                  allObjects[idName] = newShape;
+                  //allObjects.push(newShape)
+                  allIds.push(idName)
+                  
+                  //Adding label
+                  var ptsStr = getPoints(newShape)
+                  var dropdownStr = "<form><div class='form-group'>"+ 
+                                    //"<p>"+ptsStr+"</p><br>"+                 
+                                    "<select id='"+idSelect+"' class='form-control'>"+
+                                      "<option>Well</option>"+                                    
+                                    "</select>"+         
+                                  "</div></form>";
+                  var htmlCont = "<div id='"+idName+"' class='panel panel-info'>"+
+                                  "<div class='panel-heading'>"+
+                                     "<b> Annotation "+(objNo+1)+"</b>"+
+                                   "</div>"+
+                                   "<div class='panel-body'>"+dropdownStr+                                    
+                                      "<a id='btnDelete' type='button' class='btn btn-danger'>"+
+                                      "<span class='glyphicon glyphicon-minus-sign'></span>"+
+                                      " Remove Annotation"+
+                                      "</a>"+
+                                   "</div>"+
+                                "</div>";
+                  $("#annotations").append(htmlCont);
+                  $('#btnPolygon').removeClass("disabled");
+                }
+                else if(newShape.type=="polygon"){
+                  var paths=newShape.getPath()
+                  google.maps.event.addListener(newShape, 'click', function() {                                    
+                      for (var key in allObjects){                
+                        var obj = allObjects[key] 
+                        if(this.getPath()==obj.getPath()){
+                          console.log("Found At",key)
+                          setSelection(this,key);
+                        }                      
+                      }
+                      setSelection(newShape,idName);
+                  });
+                  setSelection(newShape,idName);
+                  allObjects[idName] = newShape;
+                  //allObjects.push(newShape)
+                  allIds.push(idName)
+                  
+                  //Adding label
+                  var ptsStr = getPoints(newShape)
+                  var dropdownStr = "<form><div class='form-group'>"+ 
+                                    //"<p>"+ptsStr+"</p><br>"+                 
+                                    "<select id='"+idSelect+"' class='form-control'>"+
+                                      "<option>Well</option>"+
+                                      "<option>Wet Farm Pond - Lined</option>"+
+                                      "<option>Wet Farm Pond - Unlined</option>"+
+                                      "<option>Dry Farm Pond - Lined</option>"+
+                                      "<option>Dry Farm Pond - Unlined</option>"+ 
+                                      "<option>Wall Based Checkdam</option>"+
+                                      "<option>Gate Based Checkdam</option>"+                    
+                                    "</select>"+         
+                                  "</div></form>";
+                  var htmlCont = "<div id='"+idName+"' class='panel panel-info'>"+
+                                  "<div class='panel-heading'>"+
+                                     "<b> Annotation "+(objNo+1)+"</b>"+
+                                   "</div>"+
+                                   "<div class='panel-body'>"+dropdownStr+                                    
+                                      "<a id='btnDelete' type='button' class='btn btn-danger'>"+
+                                      "<span class='glyphicon glyphicon-minus-sign'></span>"+
+                                      " Remove Annotation"+
+                                      "</a>"+
+                                   "</div>"+
+                                "</div>";
+                  $("#annotations").append(htmlCont);
+                  $('#btnPolygon').removeClass("disabled");
+                } 
+                  
             }
         });
         google.maps.event.addListener(drawingManager, 'drawingmode_changed', clearSelection)
         google.maps.event.addListener(map, 'click', clearSelection);
         totalAnnots = labelledMarkers.length
         for(ai=0;ai<totalAnnots;ai++){
-            ai_json = JSON.parse(labelledMarkers[ai]["geometryJSON"])
-            ai_class_nm = ai_json["classnm"]
-            wcrds = ai_json["worldCoords"]                    
-            pths = []
-            for (var crd in wcrds) {
-              crdlat = wcrds[crd]["lat"]
-              crdlng = wcrds[crd]["lng"]
-              pths.push({lat:parseFloat(crdlat), lng:parseFloat(crdlng)})
-            }  
-            var pgn = new google.maps.Polygon({
-              paths: pths,              
-              fillOpacity:0,
-              //fillColor: '#e6dc03',
-              fillColor: 'transparent',
-              strokeWeight: 1,
-              clickable: true,
-              draggable:true,
-              editable: true,
-              zIndex: 1,
-              editable: true,
-            });
-            pgn.setMap(map);
-
-            //---------Add drop down----------            
             var objNo=totalObjects++;                            
             var idName="obj"+objNo            
-            var idSelect="sel"+objNo            
-            // google.maps.event.addListener(pgn, 'click', function() {  
-            //   console.log(pgn.getPath())                                         
-            //   setSelection(pgn,idName);
-            // });  
-            pgn.addListener("click", function (){              
+            var idSelect="sel"+objNo
+            ai_json = JSON.parse(labelledMarkers[ai]["geometryJSON"])
+            ai_type = ai_json["type"]                    
+            ai_class_nm = ai_json["classnm"]
+            if(ai_type == "circle"){              
+              var ccenter = new google.maps.LatLng(ai_json["center"]["lat"],ai_json["center"]["lng"]);
+              var radius=ai_json["radius"]; 
+              var circle = new google.maps.Circle({
+                fillOpacity:0,
+                //fillColor: '#e6dc03',
+                fillColor: 'transparent',
+                strokeWeight: 1,
+                clickable: true,
+                draggable:true,
+                editable: true,
+                zIndex: 1,
+                editable: true,
+                center: ccenter,
+                radius:radius
+              })
+              circle.setMap(map)
+              setSelection(circle,idName);
+              allObjects[idName] = circle
+              allIds.push(idName)
+
+            }
+            if(ai_type == "polygon"){              
+              wcrds = ai_json["worldCoords"]                    
+              pths = []
+              for (var crd in wcrds) {
+                crdlat = wcrds[crd]["lat"]
+                crdlng = wcrds[crd]["lng"]
+                pths.push({lat:parseFloat(crdlat), lng:parseFloat(crdlng)})
+              }  
+              var pgn = new google.maps.Polygon({
+                paths: pths,              
+                fillOpacity:0,
+                //fillColor: '#e6dc03',
+                fillColor: 'transparent',
+                strokeWeight: 1,
+                clickable: true,
+                draggable:true,
+                editable: true,
+                zIndex: 1,
+                editable: true,
+              });
+              pgn.setMap(map); 
+              pgn.addListener("click", function (){              
               var i=0              
               for (var key in allObjects){                
                 var obj = allObjects[key] 
@@ -216,19 +307,61 @@
                 }                
               }
               
-            });          
-            setSelection(pgn,idName);
+              });          
+              setSelection(pgn,idName);              
+              allObjects[idName]=pgn
+              //allObjects.push(newShape)
+              allIds.push(idName) 
+              var ptsStr=getPoints(pgn)
+            }
             
-            allObjects[idName]=pgn
-            //allObjects.push(newShape)
-            allIds.push(idName)
+
+            //---------Add drop down----------                        
+            // google.maps.event.addListener(pgn, 'click', function() {  
+            //   console.log(pgn.getPath())                                         
+            //   setSelection(pgn,idName);
+            // });  
+            
             
             //Adding label
-            var ptsStr=getPoints(pgn)
+            
             var dropdownStr="<form><div class='form-group'>"+ 
                               //"<p>"+ptsStr+"</p><br>"+                 
                               "<select id='"+idSelect+"' class='form-control'>"+
                                 "<option>Select Class</option>";
+            
+            
+            if(ai_class_nm == "Well"){
+                dropdownStr+="<option selected='selected'>Well</option>";
+            }
+            else{
+                dropdownStr+="<option>Well</option>";
+            }
+            if(ai_class_nm == "Wet Farm Pond - Lined"){
+                dropdownStr+="<option selected='selected'>Wet Farm Pond - Lined</option>";
+            }
+            else{
+                dropdownStr+="<option>Wet Farm Pond - Lined</option>";
+            }
+            if(ai_class_nm == "Wet Farm Pond - Unlined"){
+                dropdownStr+="<option selected='selected'>Wet Farm Pond - Unlined</option>";
+            }
+            else{
+                dropdownStr+="<option>Wet Farm Pond - Unlined</option>";
+            }
+            if(ai_class_nm == "Dry Farm Pond - Lined"){
+                dropdownStr+="<option selected='selected'>Dry Farm Pond - Lined</option>";
+            }
+            else{
+                dropdownStr+="<option>Dry Farm Pond - Lined</option>";
+            }
+            if(ai_class_nm == "Dry Farm Pond - Unlined"){
+                dropdownStr+="<option selected='selected'>Dry Farm Pond - Unlined</option>";
+            }
+            else{
+                dropdownStr+="<option>Dry Farm Pond - Unlined</option>";
+            }
+
             if(ai_class_nm == "Wall Based Checkdam"){
                 dropdownStr+="<option selected='selected'>Wall Based Checkdam</option>";
             }
@@ -260,6 +393,8 @@
             $('#btnPolygon').removeClass("disabled");              
 
         }
+        zoomLevel = map.getZoom();
+        $('#zoomLvlTxt').text(zoomLevel);
 
         
   }  
@@ -405,6 +540,18 @@
     y = mercY(lat);
     x = (x - west)*xFactor;
     y = (ymax - y)*yFactor; // y points south
+    if(x < 0){
+      x = 0
+    }
+    if(x > 640){
+      x = 640
+    }
+    if(y < 0){
+      y = 0
+    }
+    if(y > 640){
+      y = 640
+    }
     return new Array(x, y);
     // }
   }
@@ -547,15 +694,19 @@ $(document).ready(function(){
     location.reload();
     //resetMapCanvas()    ;
   })
-  $("#btnSave").click(function(e){      
+  $("#btnSave").click(function(e){ 
+
+    var latlng1 = new google.maps.LatLng(cLat,cLng);
+    map.setCenter(latlng1);    
+    map.setZoom(zoomLvlofImg) 
     //var totalObj=allObjects.length
     var totalObj=Object.keys(allObjects).length    
     var zoomLevel = map.getZoom();
     var okFlag = true;
     var zoomFlag = true; 
     selIdx = $('#SelDistrictLoc').prop('selectedIndex')   
-    if(zoomLevel!=19){
-      alert("Set Zoom Level to 19 and save.");      
+    if(zoomLevel<18){
+      alert("Keep the zoom level as original and save.");      
       zoomFlag=false;
       return;
     }
@@ -579,7 +730,8 @@ $(document).ready(function(){
           var topLeftLng = ne.lng().toFixed(8);
           var bottomRightLat = ne.lat().toFixed(8);
           var bottomRightLng = sw.lng().toFixed(8);
-          var zoomLevel = map.getZoom().toFixed(8);		  
+          // var zoomLevel = map.getZoom().toFixed(8);		
+          var zoomLevel = zoomLvlofImg  
           var groundTruthingDone = true;
           var selectedClass;
           var jsonGmapMarker='';
@@ -606,69 +758,120 @@ $(document).ready(function(){
             }
             else{          
               //var currentShape = allObjects[i];
-              var currentShape = allObjects[key];
-              path=currentShape.getPath();
-              var len = path.getLength();
-              var lat,lng,latlngPix,lt,ln;
-              var arrPixelCoords=[];
-              var arrWorldCoords=[];
-              for(var j=0;j<len;j++)
-              {
-                var pixelCoords={};
-                var worldCoords={};            
-                pair=path.getAt(j);
-                lat=pair.lat().toFixed(8);
-                lng=pair.lng().toFixed(8);
-                latlngPix=getPixelCoords(lat,lng);
-                lt=Math.round(latlngPix[0]);
-                ln=Math.round(latlngPix[1]);
-                pixelCoords["x"] = lt;      
-                pixelCoords["y"] = ln;
-                worldCoords["lat"] = lat; 
-                worldCoords["lng"] = lng;
-                arrPixelCoords.push(pixelCoords);
-                arrWorldCoords.push(worldCoords);
-              }
-    
-              var annotation = {};
-              var gmapmarker = {};
-              annotation ["type"] = "polygon";
-              gmapmarker ["type"] = "polygon";
-              annotation ["objectNo"] = i;
-              gmapmarker ["objectNo"] = i;
-              annotation ["pixelCoords"] = arrPixelCoords;
-              gmapmarker ["worldCoords"] = arrWorldCoords;   
-              annotation ["classnm"] = selectedClass;
-              gmapmarker ["classnm"] = selectedClass;
-              arrAnnotations.push(annotation);
-              arrGmapMarker.push(gmapmarker);
-            }
-            i++;
+              var currentShape = allObjects[key];              
+              
+                
+              flag = 1
+              //For circle
+              if(typeof currentShape.getRadius === "function"){          // if(currentShape.type == google.maps.drawing.OverlayType.CIRCLE)              
+                console.log("circle")
+                var center=currentShape.getCenter()
+                var radius=currentShape.getRadius()
+                var bboxsw=currentShape.getBounds().getSouthWest();
+                var bboxne=currentShape.getBounds().getNorthEast();              
+                var bboxn=bboxne.lat().toFixed(8);
+                var bboxs=bboxsw.lat().toFixed(8);              
+                var bboxe=bboxne.lng().toFixed(8);
+                var bboxw=bboxsw.lng().toFixed(8);
+                var latlngNEPix=getPixelCoords(bboxn,bboxe);
+                var latlngNWPix=getPixelCoords(bboxn,bboxw);              
+                var circlePixX=(latlngNEPix[0]+latlngNWPix[0])/2;
+                var circlePixY=latlngNEPix[1];
+                var latCenter=center.lat().toFixed(8);
+                var lngCenter=center.lng().toFixed(8);                          
+                var latlngCenterPix=getPixelCoords(latCenter,lngCenter);
+                var radiusPix=latlngCenterPix[1]-circlePixY
+                var annotation = {};
+                var gmapmarker = {};
+                var centerPixelCoords={};
+                var centerWorldCoords={};
+                centerPixelCoords["x"] = latlngCenterPix[0];      
+                centerPixelCoords["y"] = latlngCenterPix[1];
+                centerWorldCoords["lat"] = latCenter; 
+                centerWorldCoords["lng"] = lngCenter;              
 
+                annotation ["type"] = "circle";
+                gmapmarker ["type"] = "circle";
+                annotation ["objectNo"] = i;
+                gmapmarker ["objectNo"] = i;
+                annotation ["radius"] = radiusPix;
+                gmapmarker ["radius"] = radius;  
+                annotation ["center"] = centerPixelCoords;
+                gmapmarker ["center"] = centerWorldCoords;  
+                annotation ["classnm"] = selectedClass;
+                gmapmarker ["classnm"] = selectedClass;              
+                arrAnnotations.push(annotation);
+                arrGmapMarker.push(gmapmarker);              
+              }
+              if(typeof currentShape.getPath === "function"){  //if(currentShape.type == google.maps.drawing.OverlayType.POLYGON)              
+                var arrPixelCoords=[];
+                var arrWorldCoords=[];
+                path=currentShape.getPath();
+                var len = path.getLength();
+                var lat,lng,latlngPix,lt,ln;
+                
+                for(var j=0;j<len;j++)
+                {
+                  var pixelCoords={};
+                  var worldCoords={};            
+                  pair=path.getAt(j);
+                  lat=pair.lat().toFixed(8);
+                  lng=pair.lng().toFixed(8);
+                  latlngPix=getPixelCoords(lat,lng);
+                  lt=Math.round(latlngPix[0]);
+                  ln=Math.round(latlngPix[1]);
+                  pixelCoords["x"] = lt;      
+                  pixelCoords["y"] = ln;
+                  worldCoords["lat"] = lat; 
+                  worldCoords["lng"] = lng;
+                  arrPixelCoords.push(pixelCoords);
+                  arrWorldCoords.push(worldCoords);
+                }
+
+                var annotation = {};
+                var gmapmarker = {};
+                annotation ["type"] = "polygon";
+                gmapmarker ["type"] = "polygon";
+                annotation ["objectNo"] = i;
+                gmapmarker ["objectNo"] = i;
+                annotation ["pixelCoords"] = arrPixelCoords;
+                gmapmarker ["worldCoords"] = arrWorldCoords;   
+                annotation ["classnm"] = selectedClass;
+                gmapmarker ["classnm"] = selectedClass;
+                arrAnnotations.push(annotation);
+                arrGmapMarker.push(gmapmarker);
+              }                              
+              i++;             
+            }
           }
+
+
+
+              
           
-          if(flag){
+          if(flag){            
             finalItem = {}
             var mapCenterArr={};
-            mapCenterArr["lat"] = centerLat;      
-            mapCenterArr["lng"] = centerLng;            
+            mapCenterArr["lat"] = cLat //centerLat;      
+            mapCenterArr["lng"] = cLng //centerLng;            
             finalItem ["mapCenter"] = mapCenterArr;
-            finalItem ["annotations"] = arrAnnotations;
+            finalItem ["annotations"] = arrAnnotations;            
             finalItem ["gmapmarker"] = arrGmapMarker;
             finalArray.push(finalItem);
             //arrPixelCoords.push(pixelCoords);
             jsonGmapMarker=JSON.stringify(arrGmapMarker);
             jsonAnnotations=JSON.stringify(arrAnnotations);
-            finalJson=JSON.stringify(finalArray);            
+            finalJson=JSON.stringify(finalArray);     
           
     
           //District_Locality_Lat_Long.png(Akola_Balapur_20.688889_76.789942.png)
           var filename='';
           var district='';         
           var locality='';
-          var latlng   = new google.maps.LatLng(centerLat, centerLng)
-          var centerLat=latlng.lat()
-          var centerLng=latlng.lng()          
+          //var latlng   = new google.maps.LatLng(centerLat, centerLng)
+          var latlng   = new google.maps.LatLng(cLat, cLng)          
+          //var centerLat=latlng.lat()
+          //var centerLng=latlng.lng()          
           geocoder = new google.maps.Geocoder();
                 
           geocoder.geocode({'latLng': latlng}, function(results, status) {
@@ -694,16 +897,16 @@ $(document).ready(function(){
                 $('#saving_submit').css("display","block") 
                 $.ajax({
                   type:"POST",
-                      url: 'ajax/save_edited_image_checkdams',
+                      url: 'ajax/save_edited_image_dataset',
                       data: {
                           'oldImageName':oldImageName,
                           'topLeftLat':topLeftLat,
                           'topLeftLng':topLeftLng,
                           'bottomRightLat':bottomRightLat,
                           'bottomRightLng':bottomRightLng,
-                          'centerLat':centerLat,
-                          'centerLng':centerLng,
-                          'zoom':zoomLevel,                           
+                          'centerLat':cLat, //centerLat,
+                          'centerLng':cLng, //centerLng,
+                          'zoom':zoomLvlofImg,//zoomLevel,                           
                           'locality': locality,                
                           'markersJSON': jsonGmapMarker,
                           'annotationJSON':jsonAnnotations,                          
@@ -715,7 +918,7 @@ $(document).ready(function(){
                             //var selIndex=$("#SelDistrictLoc").prop('selectedIndex');
                             $('#default_submit').css("display","block")
                             $('#saving_submit').css("display","none")
-                            window.location.href ='displayimagescheckdams'
+                            // window.location.href ='displayimagesdataset'
 
                           }
                           else if(data.status==-1){
