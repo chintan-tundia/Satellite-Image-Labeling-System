@@ -144,6 +144,9 @@ def labelDataset(request):
 
 def displayImagesDataset(request):
     template = loader.get_template('Gmapv3/displayDataset.html')    
+    savedImgName = request.GET.get("savedImgName")
+    if(savedImgName==None):
+        savedImgName = ""
     # imgs = Image.objects.filter(is_annotated=False)
     imgs = Image.objects.filter(Q(annotation__class_label="Well")|\
                                 Q(annotation__class_label="Wet Farm Pond - Lined")|\
@@ -165,7 +168,8 @@ def displayImagesDataset(request):
     negImgs = Image.objects.filter(is_annotated=False).count()     
         
 
-    context = {        
+    context = {  
+        'last_saved':savedImgName,     
         'images':imgs,
         'wells':wells,
         'wfpl':wfpl,
@@ -586,7 +590,8 @@ def save_edited_image_dataset(request):
 
         #Send success signal to the caller
         data = {
-             'status': 1
+             'status': 1,
+             'new_file_name':newFileName
         }        
         return JsonResponse(data)
     return JsonResponse(data)    

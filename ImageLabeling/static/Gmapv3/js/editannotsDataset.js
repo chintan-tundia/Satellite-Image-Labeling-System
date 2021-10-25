@@ -918,7 +918,7 @@ $(document).ready(function(){
                             //var selIndex=$("#SelDistrictLoc").prop('selectedIndex');
                             $('#default_submit').css("display","block")
                             $('#saving_submit').css("display","none")
-                            window.location.href ='displayimagesdataset'
+                            window.location.href ='displayimagesdataset?savedImgName=' + data.new_file_name
 
                           }
                           else if(data.status==-1){

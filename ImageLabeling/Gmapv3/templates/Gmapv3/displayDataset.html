@@ -178,6 +178,7 @@
 	</body>
 </html>
 <script type="text/javascript">	
+    var savedImageName = "{{last_saved}}"
 	var imageList = document.getElementById("imageList")
 	var canvas = document.getElementById("canvas");
 	var ctx = canvas.getContext("2d");
@@ -253,11 +254,22 @@
 	    nameEle.value=selectedImgName;
         $("#imgNameTxt").text(selectedImgName)
 	}
+    function indexMatchingText(ele, text) {
+        for (var i=0; i<ele.length;i++) {
+            if (ele[i].childNodes[0].nodeValue === text){
+                return i;
+            }
+        }
+        return undefined;
+    }
 	function initialize()
 	{
 		loadImageNames()
 		setCanvasBackground()
 		listenKeyboard()
+        var idx = indexMatchingText(imageList,savedImageName)            
+        $('#imageList').val(savedImageName).trigger('click');
+        $("#imageList").val(savedImageName);
 	}
 	function changeImageList(){                
         var neg ='0'
