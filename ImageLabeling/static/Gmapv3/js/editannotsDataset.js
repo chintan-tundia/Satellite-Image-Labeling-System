@@ -33,7 +33,7 @@
             disableDefaultUI: true,
             mapTypeId: google.maps.MapTypeId.SATELLITE,
             scaleControl: true            
-        };        
+        };
         map = new google.maps.Map(document.getElementById("googleMap"), myOptions); 
         drawingManager = new google.maps.drawing.DrawingManager({
           drawingMode: google.maps.drawing.OverlayType.MARKER,
@@ -764,7 +764,7 @@ $(document).ready(function(){
               flag = 1
               //For circle
               if(typeof currentShape.getRadius === "function"){          // if(currentShape.type == google.maps.drawing.OverlayType.CIRCLE)              
-                console.log("circle")
+                // console.log("circle")
                 var center=currentShape.getCenter()
                 var radius=currentShape.getRadius()
                 var bboxsw=currentShape.getBounds().getSouthWest();
@@ -918,7 +918,7 @@ $(document).ready(function(){
                             //var selIndex=$("#SelDistrictLoc").prop('selectedIndex');
                             $('#default_submit').css("display","block")
                             $('#saving_submit').css("display","none")
-                            // window.location.href ='displayimagesdataset'
+                            window.location.href ='displayimagesdataset'
 
                           }
                           else if(data.status==-1){
