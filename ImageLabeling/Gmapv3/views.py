@@ -166,7 +166,8 @@ def displayImagesDataset(request):
     wbc = Annotation.objects.filter(class_label="Wall Based Checkdam").count();
     gbc = Annotation.objects.filter(class_label="Gate Based Checkdam").count();    
     negImgs = Image.objects.filter(is_annotated=False).count()     
-        
+    approvedImages = imgs.filter(is_approved=True).count()
+    unapprovedImages = imgs.filter(is_approved=False).count()    
 
     context = {  
         'last_saved':savedImgName,     
@@ -179,7 +180,9 @@ def displayImagesDataset(request):
         'wbc':wbc,
         'gbc':gbc,
         'negImgs':negImgs,
-        'totalImages':totalImages
+        'totalImages':totalImages,
+        'approvedImages':approvedImages,
+        'unapprovedImages':unapprovedImages
     }
     return HttpResponse(template.render(context, request)) 
 
@@ -337,7 +340,8 @@ def getImageListDataset(request):
             print(totalImages)                       
             images_list = serializers.serialize('json', results,\
                                                 fields=('image_name','is_annotated','is_approved','image_location'))            
-
+            approvedImages = results.filter(is_approved=True).count()
+            unapprovedImages = results.filter(is_approved=False).count()
             data={
                 'status':1,
                 'images':images_list,
@@ -350,7 +354,9 @@ def getImageListDataset(request):
                 'gbc':gbcc,
                 'negImgs':negc,
                 'derivedc':derivedc,                
-                'totalImages':totalImages
+                'totalImages':totalImages,
+                'approvedImages':approvedImages,
+                'unapprovedImages':unapprovedImages
             }             
         except Exception as e:
             print(str(e))
